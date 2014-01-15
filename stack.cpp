@@ -14,7 +14,7 @@ Stack::Stack():data(NULL),len(0),capacity(INIT_STACK_SIZE)
 
 Stack::~Stack()
 {
-	if(data) delete data;
+	if(data) free(data);
 
 	len = 0;
 }

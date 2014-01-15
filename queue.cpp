@@ -15,8 +15,8 @@ Queue::~Queue()
 
 	while(p){
 		q = p;
-		delete p;
-		p = q->next;
+		p = p->next;
+		delete q;
 	}
 }
 
