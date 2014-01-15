@@ -7,11 +7,10 @@
 
 #define ARRAY_INIT_SZIE 16
 
-#ifndef _SIZE_T
-#define _SIZE_T
-typedef unsigned long	size_t;
+#ifndef _SIZE_T_ 
+#define _SIZE_T_
+typedef unsigned long size_t;
 #endif
-
 typedef void (*elem_delete_fun)(void *);
 typedef int (*elem_cmp_fun)(const void *,const void *);
 

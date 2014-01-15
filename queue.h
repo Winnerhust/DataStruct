@@ -1,11 +1,11 @@
 #ifndef _EULER_QUEUE_H
 #define _EULER_QUEUE_H
 
-#ifndef SIZE_T
-#define SIZE_T
+
+#ifndef _SIZE_T_ 
+#define _SIZE_T_
 typedef unsigned long size_t;
 #endif
-
 /*
  *back() 返回最后一个元素 
  *empty() 如果队列空则返回真 

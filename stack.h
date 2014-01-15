@@ -7,8 +7,9 @@ push() 在栈顶增加元素
 size() 返回栈中元素数目 
 top() 返回栈顶元素 
 */
-#ifndef SIZE_T
-#define SIZE_T
+
+#ifndef _SIZE_T_ 
+#define _SIZE_T_
 typedef unsigned long size_t;
 #endif
 
