@@ -10,16 +10,16 @@ void test_push()
 	
 	Stack s;
 	
-	int a=3,b=4,c=1;
+	int a = 3 , b = 4 , c = 1;
 	
 	s.push(&a);
 	s.push(&b);
 	s.push(&c);
 	
-	assert(s.size()==3);
+	assert(s.size() == 3);
 	assert(!s.empty());
 	
-	assert(*(int *)s.top()==1);
+	assert(*(int *)s.top() == 1);
 
 	cout<<"test Ok"<<endl;
 }
@@ -29,7 +29,7 @@ void test_pop()
 	
 	Stack s;
 	
-	int a=3,b=4,c=1;
+	int a = 3 , b = 4 , c = 1;
 	
 	s.push(&a);
 	s.push(&b);
@@ -38,22 +38,22 @@ void test_pop()
 	s.pop();
 	s.pop();
 
-	assert(s.size()==1);
+	assert(s.size() == 1);
 	assert(!s.empty());
-	assert(*(int *)s.top()==3);
+	assert(*(int *)s.top() == 3);
 
 	s.pop();
 	
-	assert(s.size()==0);
+	assert(s.size() == 0);
 	assert(s.empty());
-	assert((int *)s.top()==NULL);
+	assert((int *)s.top() == NULL);
 
 
 	s.pop();
 	
-	assert(s.size()==0);
+	assert(s.size() == 0);
 	assert(s.empty());
-	assert((int *)s.top()==NULL);
+	assert((int *)s.top() == NULL);
 
 	cout<<"test Ok"<<endl;
 }
@@ -62,5 +62,6 @@ int main()
 {
 	test_push();
 	test_pop();
+
 	return 0;
 }

@@ -11,8 +11,14 @@
 #define _SIZE_T_
 typedef unsigned long size_t;
 #endif
-typedef void (*elem_delete_fun)(void *);
-typedef int (*elem_cmp_fun)(const void *,const void *);
+
+#ifndef _EULER_ELEM_FUN_
+#define _EULER_ELEM_FUN_
+typedef  int (*elem_cmp_fun)(const void *a,const void *b);
+typedef  void (*elem_delete_fun)(void *);
+typedef  bool (*elem_unpred_fun)(const void *a);
+typedef  bool (*elem_binpred_fun)(const void *a,const void *b);
+#endif
 
 class Array
 {
@@ -28,7 +34,7 @@ public:
         
         bool empty() const{return len==0;}
         /*adjust capacity */
-        void resize(const size_t new_size);
+        void reserve(const size_t new_size);
 		
 		void assign(const size_t index, void *elem);
         /*return the element at index*/
@@ -40,13 +46,11 @@ public:
         void * front(){return (char *)(data[0]);}
         void * back(){ return (char *)(data[len-1]);}
 
-//        void  push_front(void *elem);
-//        void  pop_front(void *elem);
         void  push_back(void *elem);
         void * pop_back(); //dangerous
         void pop_back(void **item);
         
-        
+        void insert(const size_t pos,void *elem,const size_t length=1);
         void erase(const size_t pos,const size_t length=1);
         void remove(const void *elem);
 

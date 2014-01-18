@@ -1,7 +1,7 @@
-CXX = g++
+CXX = xlC
 CFLAGS = -g
 
-TARGETS = test_array  btree test_queue test_stack
+TARGETS = test_array  btree test_queue test_stack test_list test_dict
 LIBS = 
 
 SRCS = $(wildcard *.cpp)

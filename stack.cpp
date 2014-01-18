@@ -30,19 +30,19 @@ size_t Stack::size() const
 
 void * Stack::top()
 {
-	if(len>0)
+	if(len > 0)
 		return data[len-1];
 	return NULL;
 }
 void Stack::pop()
 {
-	if(len>0)
+	if(len > 0)
 		data[--len] = 0;
 }
 void Stack::push(void *elem)
 {
 	if(len >= capacity){
-		void ** tmp = (void **)realloc(data,capacity*2*sizeof(void *));
+		void ** tmp = (void **)realloc(data,capacity * 2 * sizeof(void *));
 		data = tmp;
 		assert(data);
 	}

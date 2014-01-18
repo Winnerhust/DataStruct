@@ -5,13 +5,13 @@
 #include <stdio.h>
 #include "queue.h"
 
-Queue::Queue(): head(NULL)	,tail(NULL),len(0)
+Queue::Queue(): head(NULL),tail(NULL),len(0)
 {
 }
 
 Queue::~Queue()
 {
-	Qlist *p =head,*q = head;
+	Qlist *p = head,*q = head;
 
 	while(p){
 		q = p;
@@ -66,7 +66,7 @@ void Queue::push(void * elem)
 	
 	++len;
 
-	if(head==NULL){
+	if(head == NULL){
 		head = p;
 		tail = head;
 	}else{
