@@ -1,4 +1,4 @@
-CXX = xlC
+CXX = g++
 CFLAGS = -g
 
 TARGETS = test_array  btree test_queue test_stack test_list test_dict
