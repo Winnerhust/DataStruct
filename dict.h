@@ -18,7 +18,7 @@ typedef  bool (*elem_binpred_fun)(const void *a,const void *b);
 
 typedef struct {
 	long me_hash;
-	enum {UNUSED,CTIVE,DUMMY}state;
+	enum {UNUSED,ACTIVE,DUMMY}state;
 	void *me_key;
 	void *me_value;
 }DictEntry;
@@ -29,12 +29,13 @@ public:
 	Dict();
 	Dict(const size_t size);
 	~Dict();
-
+	
+	bool exist(const void *key) ;
 	void *get(const void *key);
 	int get(const void *key,void **value);
 
-	int add(const void *key,const void *value);
-	int set(const void *key,const void *value);
+	bool add(const void *key,const void *value);
+	void set(const void *key,const void *value);
 
 	void remove(const void *key);
 	void clear(elem_delete_fun elem_delete=NULL);
@@ -43,8 +44,15 @@ public:
 	size_t size() const;
 	bool empty() const;
 	double rate() const;
-protected:
+	size_t hash(const void *key) const ;
+
+	DictEntry *data(){return m_table;};
+//
+	bool sys_add(const void *key,const void *value);
 	size_t resize(const size_t new_size);
+protected:
+	size_t find(const void *key);
+	int dict_errno;
 private:	
 	size_t m_fill;  /* # Active + # Dummy */
 	size_t m_used;  /* # Active */
