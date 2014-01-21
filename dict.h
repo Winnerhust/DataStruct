@@ -8,58 +8,53 @@
 typedef unsigned long size_t;
 #endif
 
-#ifndef _EULER_ELEM_FUN_
-#define _EULER_ELEM_FUN_
-typedef  int  (*elem_cmp_fun)(const void *a,const void *b);
-typedef  void (*elem_delete_fun)(void *);
-typedef  bool (*elem_unpred_fun)(const void *a);
-typedef  bool (*elem_binpred_fun)(const void *a,const void *b);
-#endif
+typedef  int (*EqualFun)(const void *a,const void *b);
+typedef  void (*delete_fun)(void *);
 
-typedef struct {
+typedef struct DictEntry{
 	long me_hash;
-	enum {UNUSED,ACTIVE,DUMMY}state;
 	void *me_key;
 	void *me_value;
+	struct DictEntry *next;
+	struct DictEntry *prev;
 }DictEntry;
 
+bool default_eq(const void * a,const void *b);
 class Dict
 {
 public:
-	Dict();
-	Dict(const size_t size);
+	Dict(const size_t size=8);
 	~Dict();
 	
 	bool exist(const void *key) ;
 	void *get(const void *key);
-	int get(const void *key,void **value);
+	bool get(const void *key,void **value);
 
 	bool add(const void *key,const void *value);
 	void set(const void *key,const void *value);
 
 	void remove(const void *key);
-	void clear(elem_delete_fun elem_delete=NULL);
+	void clear(delete_fun elem_delete=NULL);
 	
 	size_t max_size() const;
 	size_t size() const;
 	bool empty() const;
 	double rate() const;
-	size_t hash(const void *key) const ;
+	long hash(long key) const ;
+	
+	void swap(Dict & other);
+	bool resize(const size_t new_size);
 
-	DictEntry *data(){return m_table;};
-//
-	bool sys_add(const void *key,const void *value);
-	size_t resize(const size_t new_size);
-protected:
-	size_t find(const void *key);
-	int dict_errno;
+	DictEntry *data(){return *m_table;};
+	
+	EqualFun cmpfun;
 private:	
-	size_t m_fill;  /* # Active + # Dummy */
-	size_t m_used;  /* # Active */
-	
+	size_t m_all;
+	size_t m_used;  
 	size_t m_mask;
-	
-	DictEntry *m_table;
-	DictEntry m_smalltable[DICT_MINSIZE];
+	DictEntry **m_table;
+
+	bool rich_eq(const void *a,const void *b);
+
 };
 #endif

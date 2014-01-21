@@ -1,5 +1,6 @@
 #include <iostream>
 #include <assert.h>
+#include <string.h>
 #include "dict.h"
 
 using namespace std;
@@ -11,7 +12,6 @@ void test_dict()
 	
 	assert(dict.empty());
 	assert(dict.size() == 0);
-	assert(dict.max_size() == DICT_MINSIZE);
 	assert(dict.rate() > -0.005 && dict.rate() < 0.005  );
 
 
@@ -19,7 +19,6 @@ void test_dict()
 	
 	assert(d.empty());
 	assert(d.size() == 0);
-	assert(d.max_size() == 10);
 	assert(d.rate() > -0.005 && d.rate() < 0.005  );
 
 	cout<<"test OK"<<endl;	
@@ -41,18 +40,9 @@ void test_add()
 	
 	DictEntry *data = dict.data();
 
-	for(int i=0;i<dict.max_size();i++){
-		if(data[i].state != DictEntry::UNUSED)
-		cout<<"["<<i<<"]:"<<"dict["<<(char *)data[i].me_key<<"]="<<*(int *)data[i].me_value<<" hash="<<data[i].me_hash<< " state="<<data[i].state<<endl;
-		else
-		cout<<"["<<i<<"]:"<<"dict[NULL]=NULL hash=0 state=0"<<endl;
-	}
 
 	assert(!dict.empty());
 	cout<<"size:"<<dict.size()<<endl;
-	cout<<"max_size:"<<dict.max_size()<<endl;
-//	assert(dict.max_size() == DICT_MINSIZE);
-	
 	
 	cout<<"test OK"<<endl;	
 }
@@ -69,40 +59,67 @@ void test_resize()
 	
 	DictEntry *data = dict.data();
 
-	for(int i=0;i<dict.max_size();i++){
-		if(data[i].state != DictEntry::UNUSED)
-		cout<<"["<<i<<"]:"<<"dict["<<(char *)data[i].me_key<<"]="<<*(int *)data[i].me_value<<" hash="<<data[i].me_hash<< " state="<<data[i].state<<endl;
-		else
-		cout<<"["<<i<<"]:"<<"dict[NULL]=NULL hash=0 state=0"<<endl;
-	}
 
 	/*!!!!!!!!!!**/
 	dict.resize(20);
 
 	data = dict.data();
 
-	for(int i=0;i<dict.max_size();i++){
-		if(data[i].state != DictEntry::UNUSED)
-		cout<<"["<<i<<"]:"<<"dict["<<(char *)data[i].me_key<<"]="<<*(int *)data[i].me_value<<" hash="<<data[i].me_hash<< " state="<<data[i].state<<endl;
-		else
-		cout<<"["<<i<<"]:"<<"dict[NULL]=NULL hash=0 state=0"<<endl;
-	}
 
 	/*!!!!!!!!!!**/
 	dict.resize(5);
 
 	data = dict.data();
 
-	for(int i=0;i<dict.max_size();i++){
-		if(data[i].state != DictEntry::UNUSED)
-		cout<<"["<<i<<"]:"<<"dict["<<(char *)data[i].me_key<<"]="<<*(int *)data[i].me_value<<" hash="<<data[i].me_hash<< " state="<<data[i].state<<endl;
-		else
-		cout<<"["<<i<<"]:"<<"dict[NULL]=NULL hash=0 state=0"<<endl;
-	}
 
 	assert(!dict.empty());
 	cout<<"size:"<<dict.size()<<endl;
 	
+	cout<<"test OK"<<endl;	
+}
+void test_set()
+{
+	cout<<"--------test set----------"<<endl;
+	Dict dict;
+	char keys[][20] = { "a", "b", "c", "d", "e","f","g","h","l" ,"i"};
+	int values[] = {10,20,30,40,50,60,70,80,90,100};
+
+	for(int i=0;i<9;i++){
+		bool succ= dict.add(keys[i],&values[i]);
+	}
+	dict.set(keys[0],&values[2]);
+	assert(*(int *)dict.get(keys[0]) == values[2]);
+
+	dict.set(keys[9],&values[9]);
+
+	assert(*(int *)dict.get(keys[9]) == values[9]);
+
+	DictEntry *data = dict.data();
+
+	cout<<"size:"<<dict.size()<<endl;
+	
+	cout<<"test OK"<<endl;	
+}
+void test_cmp()
+{
+	cout<<"--------test cmp----------"<<endl;
+	Dict dict;
+	dict.cmpfun=(EqualFun)strcmp;
+
+	char keys[][20] = { "a", "b", "c", "d", "e","f","g","h","l" ,"i"};
+	int values[] = {10,20,30,40,50,60,70,80,90,100};
+
+	for(int i=0;i<9;i++){
+		bool succ= dict.add(keys[i],&values[i]);
+	}
+	assert(*(int *)dict.get(keys[2]) == values[2]);
+
+	assert(*(int *)dict.get("c") == values[2]);
+	
+	char t[] = "c";
+	
+	assert(*(int *)dict.get(t) == values[2]);
+
 	cout<<"test OK"<<endl;	
 }
 int main()
@@ -110,6 +127,8 @@ int main()
 	test_dict();
 	test_add();
 	test_resize();
+	test_set();
+	test_cmp();
 	return 0;
 }
 

@@ -6,26 +6,35 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "dict.h"
-Dict::Dict():m_fill(0),m_used(0),m_mask(DICT_MINSIZE-1),dict_errno(0),m_table(m_smalltable)
+
+Dict::Dict(const size_t size/*=8*/):m_all(0),m_used(0),m_table(NULL),cmpfun(NULL)
 {
-	memset(m_table,0,DICT_MINSIZE*sizeof(DictEntry));
-}
-Dict::Dict(const size_t size):m_fill(0),m_used(0),dict_errno(0),m_table(m_smalltable)
-{
-	if(size > DICT_MINSIZE){
-		m_table = (DictEntry *)malloc(size * sizeof(DictEntry));
-		assert(m_table);
-	}
-	m_mask = (size > DICT_MINSIZE ? size-1 : DICT_MINSIZE-1);
+	size_t newsize = (size > DICT_MINSIZE ? size : DICT_MINSIZE);
 	
-	memset(m_table,0,m_mask*sizeof(DictEntry));
+	m_mask = newsize - 1;
+
+	m_table = new DictEntry *[newsize];
+	assert(m_table);
+	
+	for(size_t i = 0 ; i< newsize; ++i){
+		m_table[i] = NULL;
+	}
 }
 
 Dict::~Dict()
 {
-	if(m_table != m_smalltable){
-		free(m_table);
-	} 
+	DictEntry *p = NULL,*q=NULL;
+
+	for(size_t i = 0 ; i <= m_mask; ++i ){
+		p = m_table[i];
+		while(p != NULL){
+			q = p;
+			p = p->next;
+			delete q;
+		}
+	}
+
+	delete [] m_table;
 }
 
 bool Dict::empty() const
@@ -38,191 +47,213 @@ size_t Dict::size() const
 }
 size_t Dict::max_size() const
 {
-	return m_mask+1;
+	//todo
+	return 0;
 }
 double Dict::rate() const
 {
-	return (double)(m_used*1.0/(m_mask+1));
-}
-
-void *Dict::get(const void *key)
-{
-	size_t index = find(key);
-	
-	if(m_table[index].state == DictEntry::ACTIVE){
-		return m_table[index].me_value;
-	}
-		
-	return NULL;
-}
-
-int Dict::get(const void *key,void **value )
-{
-	size_t index = find(key);
-	
-	if(m_table[index].state == DictEntry::ACTIVE){
-		*value = m_table[index].me_value;
-		return 1;
-	}
-	
+	//todo 
 	return 0;
 }
-size_t Dict::find(const void *key)
-{
-	size_t index = hash(key);
-	size_t tmp = index;
-	size_t pos = 1;
-	while(m_table[index].state != DictEntry::UNUSED && m_table[index].me_key != key){
-		index = tmp + pos*pos ;
-		if(index >= m_mask){
-			index = index % m_mask;
-			if(pos > m_mask){
-				printf("hash table overflow!\n");
-				dict_errno = -1;
-				return m_mask+1;
-			}
-		}
-		++pos;
-	}
-//	printf("find times = %d\n",pos);
-	return index;
-}
+
 bool Dict::exist(const void *key) 
 {
-	size_t index = find(key);
-	if(dict_errno != 0){
-		return false;
+	void *value;
+	return get(key,&value);
+}
+void *Dict::get(const void *key)
+{
+	void * value=NULL;
+	get(key,&value);
+
+	return value;
+}
+
+bool Dict::get(const void *key,void **value )
+{
+	long h = hash((long )key);
+	size_t index = h & m_mask;
+	
+	DictEntry *p = m_table[index]; 
+	
+	for( ; p != NULL; p = p->next){
+		if(rich_eq(p->me_key,key)){
+			*value = p->me_value;	
+			return true;
+		}
 	}
 
-	if(m_table[index].state == DictEntry::ACTIVE)
-		return true;
 	return false;
+	
 }
 bool Dict::add(const void *key,const void *value)
 {
-	size_t len = m_mask + 1;
-	if(m_used+1 >= len*0.6 ){
-		resize(len*2);
-	}
-
-	return sys_add(key ,value);
-}
-bool Dict::sys_add(const void *key,const void *value)
-{
-	void * v;
-	size_t index = find(key);
-
-	if(dict_errno != 0){
-		return false;
-	}
-	if(m_table[index].state == DictEntry::ACTIVE){
-		return false;
-	}else{
-		if(m_table[index].state == DictEntry::UNUSED){
-			++m_fill;
+	long h = hash((long )key);
+	size_t index = h & m_mask;
+	
+	DictEntry *p = m_table[index]; 
+	
+	for( ; p != NULL; p = p->next){
+		if(rich_eq(p->me_key,key)){
+			return false;	
 		}
-		++m_used;
-
-		m_table[index].state = DictEntry::ACTIVE;
-		m_table[index].me_hash = hash(key);
-		m_table[index].me_key = (void *)key;
-		m_table[index].me_value = (void *)value;
 	}
+	
+	DictEntry *entry = new DictEntry;
+	assert(entry);
+
+	entry->me_hash = h;
+	entry->me_key = (void *)key;
+	entry->me_value = (void *)value;
+	entry->next = m_table[index];
+	entry->prev = NULL;
+
+	if(m_table[index] != NULL){
+		m_table[index]->prev = entry;
+	}
+
+	m_table[index] = entry;
+
+	++m_used;
 
 	return true;
 }
 void Dict::set(const void *key,const void *value)
 {
-	void * v;
-	size_t index = find(key);
-	if(dict_errno != 0){
-		return ;
-	}
-
-	if(m_table[index].state == DictEntry::ACTIVE){
-		m_table[index].me_value = (void *)value;
-	}else{
-		if(m_table[index].state == DictEntry::UNUSED){
-			++m_fill;
+	long h = hash((long )key);
+	size_t index = h & m_mask;
+	
+	DictEntry *p = m_table[index]; 
+	
+	for( ; p != NULL; p = p->next){
+		
+		if(rich_eq(p->me_key, key)){
+			p->me_value = (void *)value;
+			return ;
 		}
-		++m_used;
-
-		m_table[index].state = DictEntry::ACTIVE;
-		m_table[index].me_value = (void *)value;
-		m_table[index].me_key = (void *)key;
 	}
+	
+	DictEntry *entry = new DictEntry;
+	assert(entry);
+
+	entry->me_hash = h;
+	entry->me_key = (void *)key;
+	entry->me_value = (void *)value;
+	entry->next = m_table[index];
+	entry->prev = NULL;
+
+	if(m_table[index] != NULL){
+		m_table[index]->prev = entry;
+	}
+
+	m_table[index] = entry;
+
+	++m_used;
+
 }
 
 void Dict::remove(const void *key)
 {
-	size_t index = find(key);
-	if(dict_errno != 0){
-		return ;
-	}
-	if(m_table[index].state == DictEntry::ACTIVE){
-		m_table[index].state = DictEntry::DUMMY;
-		--m_used;
-	}
-}
-void Dict::clear(elem_delete_fun elem_delete/* =NULL */)
-{
-	if(elem_delete){
-		for(size_t i = 0; i <= m_mask; ++i)	{
-			if(m_table[i].state == DictEntry::ACTIVE){
-				elem_delete(m_table[i].me_value);
-			}
-		}
-	}else{
-		memset(m_table,0,(m_mask+1)*sizeof(DictEntry));
-	}
-
-	m_fill = 0;
-	m_used = 0;
-}
-
-size_t Dict::resize(const size_t new_size)
-{
-	if(new_size <= DICT_MINSIZE && m_table == m_smalltable){
-			return m_used;
-	}
-	if(new_size == m_mask+1){
-		return m_used;
-	}
-
-	DictEntry *old_table = m_table;
-	size_t old_mask = m_mask ;
-	size_t new_len =( new_size > DICT_MINSIZE ? new_size :DICT_MINSIZE);
-
-	if(new_size <= DICT_MINSIZE){
-		m_table = m_smalltable;
-	}else{
-		m_table = (DictEntry *)malloc(new_len*sizeof(DictEntry));
-		assert(m_table);
-	}
-
-	memset(m_table,0,new_len*sizeof(DictEntry));
-	m_mask = new_len-1;
-	m_fill = 0;
-	m_used = 0;
-	dict_errno = 0;
+	long h = hash((long )key);
+	size_t index = h & m_mask;
 	
-	for(size_t i = 0; i<= old_mask ;++i){
-		if (old_table[i].state == DictEntry::ACTIVE){
-			sys_add(old_table[i].me_key , old_table[i].me_value);
+	DictEntry *p = m_table[index]; 
+	bool b_find = false;
+	for( ; p != NULL; p = p->next){
+		
+		if(rich_eq(p->me_key , key)){
+			b_find = true ;
+			break;
 		}
 	}
-
-	if(old_table != m_smalltable) free(old_table);
-	
-	return m_used;
+	if(b_find){
+		if(p == m_table[index])
+			m_table[index] = p->next;
+		if (p->prev != NULL)
+		    p->prev->next = p->next;
+		if (p->next != NULL)
+			p->next->prev = p->prev;	
+		delete p; 
+	}
 }
-size_t Dict::hash(const void *key) const
+
+void Dict::clear(delete_fun elem_delete/* =NULL */)
 {
-	size_t l,r;
-	l = ((unsigned long)(key)) % m_mask;
-	r = ((unsigned long)(key)) & m_mask;
+	DictEntry *p = NULL,*q=NULL;
+
+	for(size_t i = 0 ; i <= m_mask; ++i ){
+		p = m_table[i];
+		while(p != NULL){
+			q = p;
+			p = p->next;
+			delete q;
+		}
+		m_table[i] = NULL;
+	}
+
+	m_all = 0;
+	m_used = 0;
+}
+void num_swap(size_t &a,size_t &b)
+{
+	size_t tmp;
+	tmp = a;
+	a = b;
+	b = a;
+}
+void Dict::swap(Dict & other)
+{
+	num_swap(other.m_all,m_all);
+	num_swap(other.m_used,m_used);
+	num_swap(other.m_mask,m_mask);
+	
+	DictEntry **tmp_tbl = m_table;
+	m_table = other.m_table;
+	other.m_table = tmp_tbl;
+
+	EqualFun tmp_eq = cmpfun;
+	cmpfun = other.cmpfun;
+	other.cmpfun = cmpfun;
+}
+bool Dict::resize(const size_t new_size)
+{
+	Dict other(new_size);
+
+	DictEntry *p = NULL;
+	for(size_t i = 0 ; i <= m_mask; ++i ){
+		p = m_table[i];
+		while(p != NULL){
+			other.add(p->me_key,p->me_value);
+			p = p->next;
+			
+		}
+	}
+
+	swap(other);
+
+	return true;
+}
+long Dict::hash(long key) const
+{
+	long l,r,x;
+	l = ((long)(key)) % m_mask;
+	r = ((long)(key)) & m_mask;
+	x = (long)key;
+	long h=x;
+	h ^= (h >> 20) ^ (h >> 12);
+	h ^= (h >> 7) ^ (h >> 4);
 //	printf("%%:%d &:%d\n",l,r);
-	return l;
+	return (long)h;
 }
+bool Dict::rich_eq(const void *a,const void *b)
+{
+	if(a == b )
+		return true;
+	if(cmpfun != NULL)
+		return (cmpfun(a,b)==0);
+
+	return false;
+}
+
 #endif
 
