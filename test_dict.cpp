@@ -46,33 +46,28 @@ void test_add()
 	
 	cout<<"test OK"<<endl;	
 }
-void test_resize()
+void test_rehash()
 {
-	cout<<"--------test resize----------"<<endl;
+	cout<<"--------test rehash----------"<<endl;
 	Dict dict;
 	char keys[][20] = { "a", "b", "c", "d", "e","f","g","h","l" };
 	int values[] = {10,20,30,40,50,60,70,80,90};
 
 	for(int i=0;i<9;i++){
 		bool succ= dict.add(keys[i],&values[i]);
+		if(!succ)
+			cout<<"add key error ["<<keys[i]<<"]"<<endl;
 	}
 	
-	DictEntry *data = dict.data();
-
+	
+	/*!!!!!!!!!!**/
+	dict.rehash(20);
 
 	/*!!!!!!!!!!**/
-	dict.resize(20);
+	dict.rehash(5);
 
-	data = dict.data();
+	assert(dict.size()==9);
 
-
-	/*!!!!!!!!!!**/
-	dict.resize(5);
-
-	data = dict.data();
-
-
-	assert(!dict.empty());
 	cout<<"size:"<<dict.size()<<endl;
 	
 	cout<<"test OK"<<endl;	
@@ -100,12 +95,14 @@ void test_set()
 	
 	cout<<"test OK"<<endl;	
 }
+
+
 void test_cmp()
 {
 	cout<<"--------test cmp----------"<<endl;
 	Dict dict;
-	dict.cmpfun=(EqualFun)strcmp;
-
+	dict.cmpfun = (EqualFun)strcmp;
+	dict.keytype = Dict::K_STRING; 
 	char keys[][20] = { "a", "b", "c", "d", "e","f","g","h","l" ,"i"};
 	int values[] = {10,20,30,40,50,60,70,80,90,100};
 
@@ -117,18 +114,60 @@ void test_cmp()
 	assert(*(int *)dict.get("c") == values[2]);
 	
 	char t[] = "c";
-	
 	assert(*(int *)dict.get(t) == values[2]);
 
 	cout<<"test OK"<<endl;	
+}
+void test_remove()
+{
+	cout<<"--------test remove----------"<<endl;
+	Dict dict;
+	dict.cmpfun = (EqualFun)strcmp;
+	dict.keytype = Dict::K_STRING; 
+	char keys[][20] = { "a", "b", "c", "d", "e","f","g","h","l" ,"i"};
+	int values[] = {10,20,30,40,50,60,70,80,90,100};
+
+	for(int i=0;i<9;i++){
+		bool succ= dict.add(keys[i],&values[i]);
+	}
+	assert(*(int *)dict.get(keys[2]) == values[2]);
+	
+	dict.remove("c");
+	assert(dict.get("c") == NULL);
+	
+	for(int i=0;i<9;i++){
+		dict.remove(keys[i]);
+	}
+	
+	assert(dict.empty());
+
+	cout<<"test OK"<<endl;	
+
+}
+void test_test()
+{
+	Dict dict;
+	dict.cmpfun = (EqualFun)strcmp;
+	dict.keytype = Dict::K_STRING;
+	{
+		dict.set("a","1");
+		dict.set("b","2");
+		dict.set("c","3");
+	}
+
+	cout<<(char *)dict.get("a")<<endl;
+	cout<<(char *)dict.get("b")<<endl;
+	cout<<(char *)dict.get("c")<<endl;
 }
 int main()
 {
 	test_dict();
 	test_add();
-	test_resize();
+	test_rehash();
 	test_set();
 	test_cmp();
+	test_remove();
+	test_test();
 	return 0;
 }
 
